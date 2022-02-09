@@ -20,6 +20,23 @@ use std::{
 pub fn create_device(
     window: &Window,
 ) -> Result<(ID3D11Device, ID3D11DeviceContext, IDXGISwapChain), ()> {
+    let adapter = unsafe {
+        let factory = { CreateDXGIFactory1::<IDXGIFactory1>().unwrap() };
+
+        // Syntax is a bit ugly because functions like GetDesc returns a Result
+        (0..8) // Think anyone has 8 adapters available?
+            .flat_map(|i| factory.EnumAdapters(i))
+            .flat_map(|adapter: IDXGIAdapter| adapter.GetDesc().map(|desc| (adapter, desc)))
+            .filter(|(_, desc)| {
+                str::to_ascii_lowercase(
+                    &String::from_utf16(&desc.Description).unwrap_or(String::new()),
+                )
+                .contains("nvidia")
+            })
+            .map(|(adapter, _)| adapter)
+            .next()
+    };
+
     let swap_chain_desc = DXGI_SWAP_CHAIN_DESC {
         BufferDesc: DXGI_MODE_DESC {
             Width: 1280,
@@ -52,14 +69,20 @@ pub fn create_device(
 
     let feature_levels = [D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0];
 
+   let driver_type = if adapter.is_some() {
+       D3D_DRIVER_TYPE_UNKNOWN
+   } else {
+       D3D_DRIVER_TYPE_HARDWARE
+   };
+
     let mut device: Option<ID3D11Device> = None;
     let mut context: Option<ID3D11DeviceContext> = None;
     let mut swap_chain: Option<IDXGISwapChain> = None;
 
     let result = unsafe {
         D3D11CreateDeviceAndSwapChain(
-            None,
-            D3D_DRIVER_TYPE_HARDWARE,
+            adapter,
+            driver_type,
             None,
             flags,
             &feature_levels as *const i32,
