@@ -1,9 +1,7 @@
 use crate::window::Window;
 use windows::{
-    core::Interface,
     Win32::Foundation::BOOL,
     Win32::{
-        Foundation::HINSTANCE,
         Graphics::{Direct3D::*, Direct3D11::*, Dxgi::*},
     },
     Win32::{Foundation::PSTR, Graphics::Dxgi::Common::*},
@@ -13,7 +11,7 @@ use std::{
     ffi::c_void,
     fs::File,
     io::Read,
-    mem::{size_of, size_of_val},
+    mem::{size_of_val},
     result::Result,
 };
 
@@ -115,7 +113,10 @@ pub fn create_backbuffer_rtv(
     Ok(rtv)
 }
 
-pub fn create_depth_stencil_view(device: &ID3D11Device, window: &Window) -> Result<ID3D11DepthStencilView, ()>{
+pub fn create_depth_stencil_view(
+    device: &ID3D11Device,
+    window: &Window,
+) -> Result<ID3D11DepthStencilView, ()> {
     let texture_desc = D3D11_TEXTURE2D_DESC {
         Width: window.width,
         Height: window.height,
