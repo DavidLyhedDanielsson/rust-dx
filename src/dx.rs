@@ -4,7 +4,7 @@ use windows::{
     Win32::{
         Graphics::{Direct3D::*, Direct3D11::*, Dxgi::*},
     },
-    Win32::{Foundation::PSTR, Graphics::Dxgi::Common::*},
+    Win32::{Foundation::{PSTR}, Graphics::Dxgi::Common::*}, core::Interface,
 };
 
 use std::{
@@ -19,7 +19,7 @@ pub fn create_device(
     window: &Window,
 ) -> Result<(ID3D11Device, ID3D11DeviceContext, IDXGISwapChain), ()> {
     let adapter = unsafe {
-        let factory = { CreateDXGIFactory1::<IDXGIFactory1>().unwrap() };
+        let factory = { CreateDXGIFactory::<IDXGIFactory>().unwrap() };
 
         // Syntax is a bit ugly because functions like GetDesc returns a Result
         (0..8) // Think anyone has 8 adapters available?
@@ -33,30 +33,6 @@ pub fn create_device(
             })
             .map(|(adapter, _)| adapter)
             .next()
-    };
-
-    let swap_chain_desc = DXGI_SWAP_CHAIN_DESC {
-        BufferDesc: DXGI_MODE_DESC {
-            Width: 1280,
-            Height: 720,
-            RefreshRate: DXGI_RATIONAL {
-                Numerator: 0,
-                Denominator: 1,
-            },
-            Format: DXGI_FORMAT_R8G8B8A8_UNORM,
-            ScanlineOrdering: DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
-            Scaling: DXGI_MODE_SCALING_UNSPECIFIED,
-        },
-        SampleDesc: DXGI_SAMPLE_DESC {
-            Count: 1,
-            Quality: 0,
-        },
-        BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
-        BufferCount: 1,
-        OutputWindow: window.handle.into(),
-        Windowed: BOOL(1),
-        SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
-        Flags: 0,
     };
 
     let flags = if cfg!(debug_assertions) {
@@ -75,10 +51,9 @@ pub fn create_device(
 
     let mut device: Option<ID3D11Device> = None;
     let mut context: Option<ID3D11DeviceContext> = None;
-    let mut swap_chain: Option<IDXGISwapChain> = None;
 
-    let result = unsafe {
-        D3D11CreateDeviceAndSwapChain(
+    let device_result = unsafe {
+        D3D11CreateDevice(
             adapter,
             driver_type,
             None,
@@ -86,20 +61,40 @@ pub fn create_device(
             &feature_levels as *const i32,
             1,
             D3D11_SDK_VERSION,
-            &swap_chain_desc,
-            &mut swap_chain,
             &mut device,
             std::ptr::null_mut(),
             &mut context,
-        )
+        ) 
     };
 
-    if let Err(val) = result {
+    if let Err(val) = device_result {
         let err_str = val.to_string();
-        println!("{}", err_str);
+        println!("Error when creating device: {}", err_str);
     }
 
-    Ok((device.unwrap(), context.unwrap(), swap_chain.unwrap()))
+    let device = device.unwrap();
+
+    let swap_chain_desc = DXGI_SWAP_CHAIN_DESC1 {
+        Width: window.width,
+        Height: window.height,
+        Format: DXGI_FORMAT_R8G8B8A8_UNORM,
+        Stereo: BOOL(0),
+        SampleDesc: DXGI_SAMPLE_DESC {
+            Count: 1,
+            Quality: 0,
+        },
+        BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        BufferCount: 1,
+        Scaling: DXGI_MODE_SCALING_UNSPECIFIED,
+        SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
+        AlphaMode: DXGI_ALPHA_MODE_UNSPECIFIED,
+        Flags: 0,
+    };
+
+    let factory = unsafe { CreateDXGIFactory2::<IDXGIFactory2>(0).unwrap() };
+    let swap_chain = unsafe { factory.CreateSwapChainForHwnd(&device, Some(window.handle.into()), &swap_chain_desc, std::ptr::null_mut(), None) };
+
+    Ok((device, context.unwrap(), swap_chain.unwrap().cast::<IDXGISwapChain>().unwrap()))
 }
 
 pub fn create_backbuffer_rtv(
