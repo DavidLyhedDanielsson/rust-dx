@@ -83,7 +83,7 @@ fn create_window(name: &str, width: u32, height: u32) -> std::result::Result<win
 
     Ok(window::Window {
         name,
-        hwnd,
+        handle: window::handle::Handle::from(hwnd),
         width,
         height,
     })

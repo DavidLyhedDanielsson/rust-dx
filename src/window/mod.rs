@@ -1,8 +1,8 @@
-use windows::Win32::Foundation::HWND;
+pub mod handle;
 
 pub struct Window {
     pub name: String,
-    pub hwnd: HWND,
+    pub handle: handle::Handle,
     pub width: u32,
     pub height: u32,
 }

@@ -38,7 +38,7 @@ pub fn create_device(
         },
         BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
         BufferCount: 1,
-        OutputWindow: window.hwnd,
+        OutputWindow: window.handle.into(),
         Windowed: BOOL(1),
         SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
         Flags: 0,
