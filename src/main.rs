@@ -1,15 +1,15 @@
-use std::{alloc::Layout, mem, ffi::CStr};
+use std::{alloc::Layout, ffi::CStr, mem};
 
 use dx::{
     create_backbuffer_rtv, create_depth_stencil_view, create_device, create_input_layout,
     create_shaders, create_vertex_buffer,
 };
-use window::platform::{CreateWindowParams, create_window};
+use window::platform::{create_window, CreateWindowParams};
 use windows::{
     core::*,
     Win32::Graphics::Direct3D::*,
     Win32::Graphics::Direct3D11::{ID3D11Debug, D3D11_VIEWPORT},
-    Win32::{Graphics::Direct3D11::{ID3D11InfoQueue, D3D11_MESSAGE}},
+    Win32::Graphics::Direct3D11::{ID3D11InfoQueue, D3D11_MESSAGE},
     Win32::UI::WindowsAndMessaging::*,
 };
 
@@ -74,10 +74,12 @@ fn main() {
 
             let layout = Layout::from_size_align(message_size, mem::align_of::<u8>()).unwrap();
 
-            let message: *mut D3D11_MESSAGE = unsafe {std::alloc::alloc_zeroed(layout)} as *mut D3D11_MESSAGE;
-            unsafe { queue.GetMessage(i, message as *mut D3D11_MESSAGE, &mut message_size) }.unwrap();
+            let message: *mut D3D11_MESSAGE =
+                unsafe { std::alloc::alloc_zeroed(layout) } as *mut D3D11_MESSAGE;
+            unsafe { queue.GetMessage(i, message as *mut D3D11_MESSAGE, &mut message_size) }
+                .unwrap();
 
-            let message_string = unsafe { CStr::from_ptr((*message).pDescription as *const i8) } ;
+            let message_string = unsafe { CStr::from_ptr((*message).pDescription as *const i8) };
 
             println!("DX MESSAGE: {:?}", message_string);
 

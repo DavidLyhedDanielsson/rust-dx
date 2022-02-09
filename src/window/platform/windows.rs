@@ -1,7 +1,5 @@
 use windows::{
-    Win32::Foundation::*,
-    Win32::{System::LibraryLoader::*},
-    Win32::UI::WindowsAndMessaging::*,
+    Win32::Foundation::*, Win32::System::LibraryLoader::*, Win32::UI::WindowsAndMessaging::*,
 };
 
 use crate::window;
@@ -16,7 +14,11 @@ extern "system" fn wndproc(window: HWND, message: u32, wparam: WPARAM, lparam: L
     }
 }
 
-pub fn create_window(name: String, width: u32, height: u32) -> std::result::Result<window::Window, ()> {
+pub fn create_window(
+    name: String,
+    width: u32,
+    height: u32,
+) -> std::result::Result<window::Window, ()> {
     let instance = unsafe { GetModuleHandleA(None) };
     if instance.is_invalid() {
         return Err(());

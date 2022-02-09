@@ -2,7 +2,7 @@ use windows::Win32::Foundation::HWND;
 
 #[derive(Copy, Clone)]
 pub struct Handle {
-    val: HWND
+    val: HWND,
 }
 
 impl From<HWND> for Handle {

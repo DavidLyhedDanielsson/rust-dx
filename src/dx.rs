@@ -1,19 +1,12 @@
 use crate::window::Window;
 use windows::{
+    core::Interface,
     Win32::Foundation::BOOL,
-    Win32::{
-        Graphics::{Direct3D::*, Direct3D11::*, Dxgi::*},
-    },
-    Win32::{Foundation::{PSTR}, Graphics::Dxgi::Common::*}, core::Interface,
+    Win32::Graphics::{Direct3D::*, Direct3D11::*, Dxgi::*},
+    Win32::{Foundation::PSTR, Graphics::Dxgi::Common::*},
 };
 
-use std::{
-    ffi::c_void,
-    fs::File,
-    io::Read,
-    mem::{size_of_val},
-    result::Result,
-};
+use std::{ffi::c_void, fs::File, io::Read, mem::size_of_val, result::Result};
 
 pub struct MSAALevels {
     pub sample_count: u32,
@@ -60,11 +53,11 @@ pub fn create_device(
 
     let feature_levels = [D3D_FEATURE_LEVEL_11_1];
 
-   let driver_type = if adapter.is_some() {
-       D3D_DRIVER_TYPE_UNKNOWN
-   } else {
-       D3D_DRIVER_TYPE_HARDWARE
-   };
+    let driver_type = if adapter.is_some() {
+        D3D_DRIVER_TYPE_UNKNOWN
+    } else {
+        D3D_DRIVER_TYPE_HARDWARE
+    };
 
     let mut device: Option<ID3D11Device> = None;
     let mut context: Option<ID3D11DeviceContext> = None;
@@ -81,7 +74,7 @@ pub fn create_device(
             &mut device,
             std::ptr::null_mut(),
             &mut context,
-        ) 
+        )
     };
 
     if let Err(val) = device_result {
