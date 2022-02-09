@@ -24,7 +24,7 @@ fn main() {
     };
 
     let window = create_window(params);
-    let (device, context, swap_chain) = create_device(&window).unwrap();
+    let (device, context, swap_chain, _context_info) = create_device(&window).unwrap();
     let rtv = create_backbuffer_rtv(&device, &swap_chain).unwrap();
     let dsv = create_depth_stencil_view(&device, &window).unwrap();
 

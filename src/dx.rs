@@ -15,9 +15,26 @@ use std::{
     result::Result,
 };
 
+pub struct MSAALevels {
+    pub sample_count: u32,
+    pub sample_quality: u32,
+}
+
+pub struct ContextInfo {
+    multisamples: Vec<MSAALevels>,
+}
+
 pub fn create_device(
     window: &Window,
-) -> Result<(ID3D11Device, ID3D11DeviceContext, IDXGISwapChain), ()> {
+) -> Result<
+    (
+        ID3D11Device,
+        ID3D11DeviceContext,
+        IDXGISwapChain,
+        ContextInfo,
+    ),
+    (),
+> {
     let adapter = unsafe {
         let factory = { CreateDXGIFactory::<IDXGIFactory>().unwrap() };
 
@@ -72,8 +89,6 @@ pub fn create_device(
         println!("Error when creating device: {}", err_str);
     }
 
-    let device = device.unwrap();
-
     let swap_chain_desc = DXGI_SWAP_CHAIN_DESC1 {
         Width: window.width,
         Height: window.height,
@@ -91,10 +106,40 @@ pub fn create_device(
         Flags: 0,
     };
 
-    let factory = unsafe { CreateDXGIFactory2::<IDXGIFactory2>(0).unwrap() };
-    let swap_chain = unsafe { factory.CreateSwapChainForHwnd(&device, Some(window.handle.into()), &swap_chain_desc, std::ptr::null_mut(), None) };
+    let device = device.unwrap();
 
-    Ok((device, context.unwrap(), swap_chain.unwrap().cast::<IDXGISwapChain>().unwrap()))
+    let factory = unsafe { CreateDXGIFactory2::<IDXGIFactory2>(0).unwrap() };
+    let swap_chain = unsafe {
+        factory.CreateSwapChainForHwnd(
+            &device,
+            Some(window.handle.into()),
+            &swap_chain_desc,
+            std::ptr::null_mut(),
+            None,
+        )
+    };
+
+    let multisamples: Vec<MSAALevels> = unsafe {
+        (1..D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT)
+            .flat_map(|sample_count| {
+                device
+                    .CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sample_count)
+                    .and_then(|sample_quality| {
+                        Ok(MSAALevels {
+                            sample_count,
+                            sample_quality,
+                        })
+                    })
+            })
+            .collect()
+    };
+
+    Ok((
+        device,
+        context.unwrap(),
+        swap_chain.unwrap().cast::<IDXGISwapChain>().unwrap(),
+        ContextInfo { multisamples },
+    ))
 }
 
 pub fn create_backbuffer_rtv(
