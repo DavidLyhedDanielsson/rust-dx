@@ -4,96 +4,26 @@ use dx::{
     create_backbuffer_rtv, create_depth_stencil_view, create_device, create_input_layout,
     create_shaders, create_vertex_buffer,
 };
+use window::platform::{CreateWindowParams, create_window};
 use windows::{
     core::*,
-    Win32::Foundation::*,
     Win32::Graphics::Direct3D::*,
     Win32::Graphics::Direct3D11::{ID3D11Debug, D3D11_VIEWPORT},
-    Win32::{System::LibraryLoader::*, Graphics::Direct3D11::{ID3D11InfoQueue, D3D11_MESSAGE}},
+    Win32::{Graphics::Direct3D11::{ID3D11InfoQueue, D3D11_MESSAGE}},
     Win32::UI::WindowsAndMessaging::*,
 };
 
 mod dx;
 mod window;
 
-extern "system" fn wndproc(window: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    match message {
-        WM_DESTROY => {
-            unsafe { PostQuitMessage(0) };
-            LRESULT::default()
-        }
-        _ => unsafe { DefWindowProcA(window, message, wparam, lparam) },
-    }
-}
-
-fn create_window(name: &str, width: u32, height: u32) -> std::result::Result<window::Window, ()> {
-    let instance = unsafe { GetModuleHandleA(None) };
-    if instance.is_invalid() {
-        return Err(());
-    }
-
-    let name = name.to_string();
-    let mut class = "RustD3D11Class\0".to_string();
-
-    let wnd_class = WNDCLASSEXA {
-        cbSize: mem::size_of::<WNDCLASSEXA>() as u32,
-        style: CS_HREDRAW | CS_VREDRAW,
-        lpfnWndProc: Some(wndproc),
-        hInstance: instance,
-        hCursor: unsafe { LoadCursorW(None, IDC_ARROW) },
-        lpszClassName: PSTR(class.as_mut_ptr()),
-        ..Default::default()
-    };
-
-    let atom = unsafe { RegisterClassExA(&wnd_class) };
-    if atom == 0 {
-        return Err(());
-    }
-
-    let mut window_rect = RECT {
-        left: 0,
-        top: 0,
-        right: width as i32,
-        bottom: height as i32,
-    };
-    unsafe { AdjustWindowRect(&mut window_rect, WS_OVERLAPPEDWINDOW, false) };
-
-    let hwnd = unsafe {
-        CreateWindowExA(
-            Default::default(),
-            class,
-            name.to_string(),
-            WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            window_rect.right - window_rect.left,
-            window_rect.bottom - window_rect.top,
-            None, // no parent window
-            None, // no menus
-            instance,
-            std::ptr::null(),
-        )
-    };
-
-    if hwnd.is_invalid() {
-        return Err(());
-    }
-
-    unsafe { ShowWindow(hwnd, SW_SHOW) };
-
-    Ok(window::Window {
-        name,
-        handle: window::handle::Handle::from(hwnd),
-        width,
-        height,
-    })
-}
-
 fn main() {
-    let starting_width = 1280;
-    let starting_height = 720;
+    let params = CreateWindowParams {
+        name: "Test window".to_string(),
+        width: 1280,
+        height: 720,
+    };
 
-    let window = create_window("Test window\0", starting_width, starting_height).unwrap();
+    let window = create_window(params);
     let (device, context, swap_chain) = create_device(&window).unwrap();
     let rtv = create_backbuffer_rtv(&device, &swap_chain).unwrap();
     let dsv = create_depth_stencil_view(&device, &window).unwrap();

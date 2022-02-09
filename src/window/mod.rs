@@ -1,4 +1,5 @@
 pub mod handle;
+pub mod platform;
 
 pub struct Window {
     pub name: String,
