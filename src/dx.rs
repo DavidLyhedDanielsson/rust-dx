@@ -65,7 +65,7 @@ pub fn create_device(
         0
     };
 
-    let feature_levels = [D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0];
+    let feature_levels = [D3D_FEATURE_LEVEL_11_1];
 
    let driver_type = if adapter.is_some() {
        D3D_DRIVER_TYPE_UNKNOWN
